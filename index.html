@@ -422,7 +422,7 @@
     </div>
 
     <script>
-        // Data awal dari tabel yang diberikan
+        // Data awal dari tabel yang diberikan (tanpa Wahid)
         const initialData = {
             'Aan': [35, 35, 35, 35, 18, 0, 0, 0, 0, 0, 0, 0],
             'Adam': [35, 35, 35, 35, 9, 0, 0, 0, 0, 0, 0, 0],
@@ -449,7 +449,6 @@
             'Rival': [10, 35, 35, 35, 34, 0, 0, 0, 0, 0, 0, 0],
             'Rivaldi': [9, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
             'Suhail': [35, 17, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-            'Wahid': [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
             'Yusran': [35, 35, 35, 22, 0, 0, 0, 0, 0, 0, 0, 0],
             'Zauqi': [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
             'Zul': [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
@@ -457,14 +456,14 @@
             'Muh Ering': [0, 0, 50, 0, 0, 0, 0, 0, 0, 0, 0, 0]
         };
 
-        // Target pembayaran per nama (35 untuk kebanyakan, 50 untuk beberapa)
+        // Target pembayaran per nama - default 35, kecuali Dile, Ibnu sabik, dan Muh Ering = 50
         const targetPembayaran = {
-            'Aan': 35, 'Adam': 35, 'Akmal': 35, 'Ansar': 50, 'Arul': 35,
+            'Aan': 35, 'Adam': 35, 'Akmal': 35, 'Ansar': 35, 'Arul': 35,
             'Arzad': 35, 'Asraf': 35, 'Dwiky': 35, 'Erfan': 35, 'Fajrin': 35,
-            'Fathurrahman': 35, 'Fiqram': 35, 'Hamdani': 35, 'Ibnu sabik': 35,
+            'Fathurrahman': 35, 'Fiqram': 35, 'Hamdani': 35, 'Ibnu sabik': 50,
             'Ipping': 35, 'Iqbal': 35, 'Jamil': 35, 'Johar': 35, 'Khalik': 35,
             'Mahfud': 35, 'Muhlis': 35, 'Ridho': 35, 'Rival': 35, 'Rivaldi': 35,
-            'Suhail': 35, 'Wahid': 35, 'Yusran': 35, 'Zauqi': 35, 'Zul': 35,
+            'Suhail': 35, 'Yusran': 35, 'Zauqi': 35, 'Zul': 35,
             'Dile': 50, 'Muh Ering': 50
         };
 
@@ -496,7 +495,7 @@
                 const row = document.createElement('tr');
                 const target = targetPembayaran[name];
                 row.innerHTML = `
-                    <td class="nama-cell">${name} <small>(Target: Rp ${target})</small></td>
+                    <td class="nama-cell">${name}</td>
                     ${paymentData[name].map((amount, index) => {
                         const status = getPaymentStatus(amount, target);
                         return `
