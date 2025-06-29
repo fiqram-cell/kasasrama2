@@ -338,6 +338,58 @@
                 grid-template-columns: 1fr;
             }
         }
+        .btn-warning {
+    background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+    color: white;
+}
+
+.btn-warning:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 20px rgba(240, 147, 251, 0.3);
+}
+
+.btn-secondary {
+    background: linear-gradient(135deg, #74b9ff 0%, #0984e3 100%);
+    color: white;
+}
+
+.btn-secondary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 20px rgba(116, 185, 255, 0.3);
+}
+
+.control-buttons {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.data-status {
+    padding: 10px;
+    margin: 10px 30px;
+    border-radius: 8px;
+    font-size: 14px;
+    text-align: center;
+    font-weight: 500;
+}
+
+.data-saved {
+    background-color: #d4edda;
+    color: #155724;
+    border: 1px solid #c3e6cb;
+}
+
+.data-default {
+    background-color: #fff3cd;
+    color: #856404;
+    border: 1px solid #ffeaa7;
+}
+
+.alert-info {
+    background-color: #d1ecf1;
+    color: #0c5460;
+    border: 1px solid #bee5eb;
+}
     </style>
 </head>
 <body>
@@ -366,20 +418,25 @@
         </div>
 
         <div id="alert" class="alert" style="display: none;"></div>
+        <div id="dataStatus" class="data-status"></div>
 
         <div class="controls">
-            <div class="stats">
-                <div class="stat-card">
-                    <h3 id="totalPenghuni">0</h3>
-                    <p>Total Penghuni</p>
-                </div>
-                <div class="stat-card">
-                    <h3 id="totalPembayaran">Rp 0</h3>
-                    <p>Total Pembayaran</p>
-                </div>
-            </div>
-            <button class="btn btn-success" onclick="downloadTabel()">📥 Download Tabel</button>
+    <div class="stats">
+        <div class="stat-card">
+            <h3 id="totalPenghuni">0</h3>
+            <p>Total Penghuni</p>
         </div>
+        <div class="stat-card">
+            <h3 id="totalPembayaran">Rp 0</h3>
+            <p>Total Pembayaran</p>
+        </div>
+    </div>
+    <div class="control-buttons">
+        <button class="btn btn-success" onclick="downloadTabel()">📥 Download Tabel</button>
+        <button class="btn btn-secondary" onclick="backupData()">💾 Backup Data</button>
+        <button class="btn btn-warning" onclick="resetData()">🔄 Reset ke Data Awal</button>
+    </div>
+</div>
 
         <div class="table-container">
             <div class="scroll-indicator">← Scroll untuk melihat semua bulan →</div>
@@ -468,12 +525,98 @@
         };
 
         let paymentData = JSON.parse(JSON.stringify(initialData)); // Deep copy
+        // Fungsi untuk menyimpan data ke penyimpanan lokal
+function saveDataToStorage() {
+    const dataToSave = {
+        paymentData: paymentData,
+        lastUpdated: new Date().toISOString()
+    };
+    
+    // Simpan sebagai string JSON ke variabel global (karena tidak bisa pakai localStorage)
+    window.savedPaymentData = JSON.stringify(dataToSave);
+    updateDataStatus('saved');
+}
+
+// Fungsi untuk memuat data dari penyimpanan
+function loadDataFromStorage() {
+    if (window.savedPaymentData) {
+        try {
+            const parsedData = JSON.parse(window.savedPaymentData);
+            paymentData = parsedData.paymentData;
+            updateDataStatus('loaded');
+            return true;
+        } catch (error) {
+            console.error('Error loading saved data:', error);
+        }
+    }
+    
+    // Jika tidak ada data tersimpan, gunakan data awal
+    paymentData = JSON.parse(JSON.stringify(initialData));
+    updateDataStatus('default');
+    return false;
+}
+
+// Fungsi untuk update status data
+function updateDataStatus(status) {
+    const statusElement = document.getElementById('dataStatus');
+    const now = new Date().toLocaleString('id-ID');
+    
+    switch (status) {
+        case 'saved':
+            statusElement.className = 'data-status data-saved';
+            statusElement.textContent = `✅ Data tersimpan otomatis - ${now}`;
+            break;
+        case 'loaded':
+            statusElement.className = 'data-status data-saved';
+            statusElement.textContent = `✅ Data berhasil dimuat dari penyimpanan`;
+            break;
+        case 'default':
+            statusElement.className = 'data-status data-default';
+            statusElement.textContent = `⚠️ Menggunakan data default - belum ada data tersimpan`;
+            break;
+        case 'reset':
+            statusElement.className = 'data-status data-default';
+            statusElement.textContent = `🔄 Data direset ke nilai awal - ${now}`;
+            break;
+    }
+}
+
+function resetData() {
+    if (confirm('Apakah Anda yakin ingin mengembalikan data ke kondisi awal? Semua perubahan akan hilang!')) {
+        paymentData = JSON.parse(JSON.stringify(initialData));
+        saveDataToStorage();
+        renderTable();
+        updateStats();
+        updateDataStatus('reset');
+        showAlert('Data berhasil direset ke kondisi awal!', 'success');
+    }
+}
+
+function backupData() {
+    const backupData = {
+        paymentData: paymentData,
+        targetPembayaran: targetPembayaran,
+        backupDate: new Date().toISOString(),
+        version: '1.0'
+    };
+    
+    const dataStr = JSON.stringify(backupData, null, 2);
+    const dataBlob = new Blob([dataStr], {type: 'application/json'});
+    
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(dataBlob);
+    link.download = `backup-keuangan-asrama-${new Date().toISOString().split('T')[0]}.json`;
+    link.click();
+    
+    showAlert('Backup data berhasil diunduh!', 'success');
+}
 
         function initializeApp() {
-            populateNameSelect();
-            renderTable();
-            updateStats();
-        }
+    loadDataFromStorage(); // Tambahkan baris ini
+    populateNameSelect();
+    renderTable();
+    updateStats();
+}
 
         function populateNameSelect() {
             const select = document.getElementById('namaSelect');
@@ -522,6 +665,7 @@
                 showAlert('Mohon pilih nama dan masukkan jumlah pembayaran yang valid!', 'error');
                 return;
             }
+            saveDataToStorage();
 
             // Proses pembayaran otomatis
             const target = targetPembayaran[nama];
