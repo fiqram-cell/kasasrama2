@@ -385,37 +385,96 @@
         </div>
 
         <div class="form-section" style="border-top: 2px solid #e9ecef;">
-            <div class="section-title">⚙️ Kelola Status Libur</div>
-            <div class="form-container">
-                <div class="form-group">
-                    <label for="namaLiburSelect">Pilih Nama:</label>
-                    <select id="namaLiburSelect">
-                        <option value="">-- Pilih Nama --</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label for="bulanLiburSelect">Pilih Bulan:</label>
-                    <select id="bulanLiburSelect">
-                        <option value="">-- Pilih Bulan --</option>
-                        <option value="0">Januari 2025</option>
-                        <option value="1">Februari 2025</option>
-                        <option value="2">Maret 2025</option>
-                        <option value="3">April 2025</option>
-                        <option value="4">Mei 2025</option>
-                        <option value="5">Juni 2025</option>
-                        <option value="6">Juli 2025</option>
-                        <option value="7">Agustus 2025</option>
-                        <option value="8">September 2025</option>
-                        <option value="9">Oktober 2025</option>
-                        <option value="10">November 2025</option>
-                        <option value="11">Desember 2025</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <button class="btn btn-primary" onclick="toggleLibur()">Toggle Status Libur</button>
-                </div>
-            </div>
+    <div class="section-title">⚙️ Kelola Status Libur</div>
+    <div class="form-container">
+        <div class="form-group">
+            <label for="namaLiburSelect">Pilih Nama:</label>
+            <select id="namaLiburSelect">
+                <option value="">-- Pilih Nama --</option>
+            </select>
         </div>
+        <div class="form-group">
+            <label for="bulanLiburSelect">Pilih Bulan:</label>
+            <select id="bulanLiburSelect">
+                <option value="">-- Pilih Bulan --</option>
+                <option value="0">Januari 2025</option>
+                <option value="1">Februari 2025</option>
+                <option value="2">Maret 2025</option>
+                <option value="3">April 2025</option>
+                <option value="4">Mei 2025</option>
+                <option value="5">Juni 2025</option>
+                <option value="6">Juli 2025</option>
+                <option value="7">Agustus 2025</option>
+                <option value="8">September 2025</option>
+                <option value="9">Oktober 2025</option>
+                <option value="10">November 2025</option>
+                <option value="11">Desember 2025</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <button class="btn btn-primary" onclick="toggleLibur()">Toggle Status Libur</button>
+        </div>
+    </div>
+</div>
+
+<script>
+function toggleLibur() {
+    const nama = document.getElementById('namaLiburSelect').value;
+    const bulan = parseInt(document.getElementById('bulanLiburSelect').value);
+
+    if (!nama || bulan === '' || isNaN(bulan)) {
+        showAlert('Mohon pilih nama dan bulan yang valid!', 'error');
+        return;
+    }
+
+    // Toggle status libur
+    if (!statusLibur[nama]) {
+        statusLibur[nama] = new Array(12).fill(false);
+    }
+    
+    const wasLibur = statusLibur[nama][bulan];
+    statusLibur[nama][bulan] = !statusLibur[nama][bulan];
+    
+    // Adjust payment amount based on new status
+    const currentPayment = paymentData[nama][bulan];
+    const normalTarget = targetPembayaran[nama];
+    
+    if (statusLibur[nama][bulan]) {
+        // Berubah menjadi libur
+        if (currentPayment >= normalTarget) {
+            // Jika sudah bayar penuh (35/50), ubah jadi 10
+            paymentData[nama][bulan] = 10;
+        } else if (currentPayment > 10) {
+            // Jika lebih dari 10 tapi belum penuh, ubah jadi 10
+            paymentData[nama][bulan] = 10;
+        }
+        // Jika kurang dari atau sama dengan 10, biarkan apa adanya
+    } else {
+        // Berubah menjadi normal (tidak libur lagi)
+        if (currentPayment === 10) {
+            // Jika pembayaran adalah 10 (pembayaran libur), reset jadi 0
+            paymentData[nama][bulan] = 0;
+        }
+        // Jika lebih dari 10, biarkan apa adanya (mungkin sudah bayar sebagian)
+    }
+    
+    const bulanNames = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 
+                      'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
+    
+    const status = statusLibur[nama][bulan] ? 'LIBUR' : 'NORMAL';
+    const paymentInfo = paymentData[nama][bulan] > 0 ? ` (Pembayaran: Rp ${paymentData[nama][bulan]})` : '';
+    
+    showAlert(`Status ${nama} untuk bulan ${bulanNames[bulan]} diubah menjadi: ${status}${paymentInfo}`, 'success');
+    
+    // Re-render table
+    renderTable();
+    updateStats();
+    
+    // Clear form
+    document.getElementById('namaLiburSelect').value = '';
+    document.getElementById('bulanLiburSelect').value = '';
+}
+</script>
 
         <div id="alert" class="alert" style="display: none;"></div>
 
