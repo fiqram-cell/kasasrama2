@@ -243,6 +243,15 @@
             font-style: italic;
         }
 
+        .libur-indicator {
+            background: linear-gradient(135deg, #ffc107 0%, #ff8f00 100%);
+            color: white;
+            border-radius: 20px;
+            padding: 4px 8px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+
         .alert {
             padding: 15px;
             margin: 20px 30px;
@@ -303,6 +312,15 @@
             font-size: 0.9em;
         }
 
+        .section-title {
+            margin-bottom: 20px;
+            color: #333;
+            font-size: 1.2em;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
         @media (max-width: 768px) {
             .header h1 {
                 font-size: 2em;
@@ -348,6 +366,7 @@
         </div>
 
         <div class="form-section">
+            <div class="section-title">💰 Tambah Pembayaran</div>
             <div class="form-container">
                 <div class="form-group">
                     <label for="namaSelect">Pilih Nama:</label>
@@ -361,6 +380,39 @@
                 </div>
                 <div class="form-group">
                     <button class="btn btn-primary" onclick="tambahPembayaran()">Tambah Pembayaran</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="form-section" style="border-top: 2px solid #e9ecef;">
+            <div class="section-title">⚙️ Kelola Status Libur</div>
+            <div class="form-container">
+                <div class="form-group">
+                    <label for="namaLiburSelect">Pilih Nama:</label>
+                    <select id="namaLiburSelect">
+                        <option value="">-- Pilih Nama --</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="bulanLiburSelect">Pilih Bulan:</label>
+                    <select id="bulanLiburSelect">
+                        <option value="">-- Pilih Bulan --</option>
+                        <option value="0">Januari 2025</option>
+                        <option value="1">Februari 2025</option>
+                        <option value="2">Maret 2025</option>
+                        <option value="3">April 2025</option>
+                        <option value="4">Mei 2025</option>
+                        <option value="5">Juni 2025</option>
+                        <option value="6">Juli 2025</option>
+                        <option value="7">Agustus 2025</option>
+                        <option value="8">September 2025</option>
+                        <option value="9">Oktober 2025</option>
+                        <option value="10">November 2025</option>
+                        <option value="11">Desember 2025</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <button class="btn btn-primary" onclick="toggleLibur()">Toggle Status Libur</button>
                 </div>
             </div>
         </div>
@@ -456,9 +508,9 @@
             'Muh Ering': [0, 0, 50, 0, 0, 0, 0, 0, 0, 0, 0, 0]
         };
 
-        // Target pembayaran per nama - default 35, kecuali Dile, Ibnu sabik, dan Muh Ering = 50
+        // Target pembayaran per nama - default 35, kecuali Dile, Ibnu sabik, Muh Ering, dan Akmal = 50
         const targetPembayaran = {
-            'Aan': 35, 'Adam': 35, 'Akmal': 35, 'Ansar': 35, 'Arul': 35,
+            'Aan': 35, 'Adam': 35, 'Akmal': 50, 'Ansar': 35, 'Arul': 35,
             'Arzad': 35, 'Asraf': 35, 'Dwiky': 35, 'Erfan': 35, 'Fajrin': 35,
             'Fathurrahman': 35, 'Fiqram': 35, 'Hamdani': 35, 'Ibnu sabik': 50,
             'Ipping': 35, 'Iqbal': 35, 'Jamil': 35, 'Johar': 35, 'Khalik': 35,
@@ -467,9 +519,17 @@
             'Dile': 50, 'Muh Ering': 50
         };
 
+        // Status libur untuk setiap nama dan bulan
+        let statusLibur = {};
+
         let paymentData = JSON.parse(JSON.stringify(initialData)); // Deep copy
 
         function initializeApp() {
+            // Initialize status libur untuk semua nama
+            Object.keys(paymentData).forEach(name => {
+                statusLibur[name] = new Array(12).fill(false);
+            });
+            
             populateNameSelect();
             renderTable();
             updateStats();
@@ -477,6 +537,7 @@
 
         function populateNameSelect() {
             const select = document.getElementById('namaSelect');
+            const selectLibur = document.getElementById('namaLiburSelect');
             const names = Object.keys(paymentData).sort();
             
             names.forEach(name => {
@@ -484,6 +545,11 @@
                 option.value = name;
                 option.textContent = name;
                 select.appendChild(option);
+
+                const optionLibur = document.createElement('option');
+                optionLibur.value = name;
+                optionLibur.textContent = name;
+                selectLibur.appendChild(optionLibur);
             });
         }
 
@@ -493,11 +559,14 @@
             
             Object.keys(paymentData).sort().forEach(name => {
                 const row = document.createElement('tr');
-                const target = targetPembayaran[name];
+                const normalTarget = targetPembayaran[name];
+                
                 row.innerHTML = `
                     <td class="nama-cell">${name}</td>
                     ${paymentData[name].map((amount, index) => {
-                        const status = getPaymentStatus(amount, target);
+                        const isLibur = statusLibur[name] && statusLibur[name][index];
+                        const target = isLibur ? 10 : normalTarget;
+                        const status = getPaymentStatus(amount, target, isLibur);
                         return `
                             <td>${amount > 0 ? 'Rp. ' + amount : ''}</td>
                             <td>${status}</td>
@@ -508,9 +577,16 @@
             });
         }
 
-        function getPaymentStatus(amount, target) {
-            if (amount === 0) return '<span class="empty-cell">-</span>';
-            if (amount >= target) return '<span class="paid">LUNAS</span>';
+        function getPaymentStatus(amount, target, isLibur) {
+            if (amount === 0) {
+                if (isLibur) return '<span class="libur-indicator">LIBUR</span>';
+                return '<span class="empty-cell">-</span>';
+            }
+            if (amount >= target) {
+                if (isLibur) return '<span class="paid">LUNAS (LIBUR)</span>';
+                return '<span class="paid">LUNAS</span>';
+            }
+            if (isLibur) return '<span class="partial">KURANG (LIBUR)</span>';
             return '<span class="partial">KURANG</span>';
         }
 
@@ -524,12 +600,14 @@
             }
 
             // Proses pembayaran otomatis
-            const target = targetPembayaran[nama];
+            const normalTarget = targetPembayaran[nama];
             let sisaPembayaran = jumlah;
             
             // Cari bulan pertama yang belum lunas
             for (let bulan = 0; bulan < 12 && sisaPembayaran > 0; bulan++) {
                 const pembayaranSekarang = paymentData[nama][bulan];
+                const isLibur = statusLibur[nama] && statusLibur[nama][bulan];
+                const target = isLibur ? 10 : normalTarget;
                 const kebutuhan = target - pembayaranSekarang;
                 
                 if (kebutuhan > 0) {
@@ -552,6 +630,36 @@
             } else {
                 showAlert(`Pembayaran berhasil ditambahkan untuk ${nama}!`, 'success');
             }
+        }
+
+        function toggleLibur() {
+            const nama = document.getElementById('namaLiburSelect').value;
+            const bulan = parseInt(document.getElementById('bulanLiburSelect').value);
+
+            if (!nama || bulan === '' || isNaN(bulan)) {
+                showAlert('Mohon pilih nama dan bulan yang valid!', 'error');
+                return;
+            }
+
+            // Toggle status libur
+            if (!statusLibur[nama]) {
+                statusLibur[nama] = new Array(12).fill(false);
+            }
+            
+            statusLibur[nama][bulan] = !statusLibur[nama][bulan];
+            
+            const bulanNames = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 
+                              'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
+            
+            const status = statusLibur[nama][bulan] ? 'LIBUR' : 'NORMAL';
+            showAlert(`Status ${nama} untuk bulan ${bulanNames[bulan]} diubah menjadi: ${status}`, 'success');
+            
+            // Re-render table
+            renderTable();
+            
+            // Clear form
+            document.getElementById('namaLiburSelect').value = '';
+            document.getElementById('bulanLiburSelect').value = '';
         }
 
         function updateStats() {
