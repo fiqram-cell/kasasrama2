@@ -665,7 +665,6 @@ function backupData() {
                 showAlert('Mohon pilih nama dan masukkan jumlah pembayaran yang valid!', 'error');
                 return;
             }
-            saveDataToStorage();
 
             // Proses pembayaran otomatis
             const target = targetPembayaran[nama];
@@ -682,6 +681,9 @@ function backupData() {
                     sisaPembayaran -= dibayar;
                 }
             }
+            
+            // Simpan data setelah perubahan
+            saveDataToStorage();
             
             // Re-render table
             renderTable();
