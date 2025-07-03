@@ -666,6 +666,8 @@ function backupData() {
                 return;
             }
 
+            console.log('Sebelum pembayaran:', nama, paymentData[nama]); // Debug log
+
             // Proses pembayaran otomatis
             const target = targetPembayaran[nama];
             let sisaPembayaran = jumlah;
@@ -681,6 +683,8 @@ function backupData() {
                     sisaPembayaran -= dibayar;
                 }
             }
+            
+            console.log('Setelah pembayaran:', nama, paymentData[nama]); // Debug log
             
             // Simpan data setelah perubahan
             saveDataToStorage();
