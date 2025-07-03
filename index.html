@@ -666,8 +666,6 @@ function backupData() {
                 return;
             }
 
-            console.log('Sebelum pembayaran:', nama, paymentData[nama]); // Debug log
-
             // Proses pembayaran otomatis
             const target = targetPembayaran[nama];
             let sisaPembayaran = jumlah;
@@ -684,11 +682,6 @@ function backupData() {
                 }
             }
             
-            console.log('Setelah pembayaran:', nama, paymentData[nama]); // Debug log
-            
-            // Simpan data setelah perubahan
-            saveDataToStorage();
-            
             // Re-render table
             renderTable();
             updateStats();
@@ -698,9 +691,9 @@ function backupData() {
             document.getElementById('jumlahInput').value = '';
             
             if (sisaPembayaran > 0) {
-                showAlert(`Pembayaran berhasil ditambahkan untuk ${nama}! Sisa Rp ${sisaPembayaran.toLocaleString('id-ID')} (semua bulan sudah lunas)`, 'success');
+                showAlert(`Pembayaran berhasil ditambahkan untuk ${nama}! Sisa Rp ${sisaPembayaran.toLocaleString('id-ID')} (semua bulan sudah lunas). Jangan lupa export data!`, 'success');
             } else {
-                showAlert(`Pembayaran berhasil ditambahkan untuk ${nama}!`, 'success');
+                showAlert(`Pembayaran berhasil ditambahkan untuk ${nama}! Jangan lupa export data untuk menyimpan progress.`, 'success');
             }
         }
 
